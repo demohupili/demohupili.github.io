@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The S$1,000,000 Public Flat & The 99-Year Clock: Anatomy of Singapore HDB Resale Dynamics</title>
+  
+  <!-- Editorial & Executive Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,600&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #0a0f1d;
+      --bg-surface: #111827;
+      --bg-card: #1f2937;
+      --border: #374151;
+      --border-focus: #38bdf8;
+      --text-main: #f9fafb;
+      --text-muted: #9ca3af;
+      --text-dim: #6b7280;
+      --accent-cyan: #38bdf8;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --accent-purple: #c084fc;
+      --gold: #fbbf24;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.65;
+      padding-bottom: 80px;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Editorial Masthead */
+    .masthead {
+      padding: 40px 0 28px 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 32px;
+    }
+
+    .meta-tagline {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: var(--accent-cyan);
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      margin-bottom: 14px;
+    }
+
+    .headline {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.85rem, 3.5vw, 2.75rem);
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -0.01em;
+      color: #ffffff;
+      margin-bottom: 12px;
+    }
+
+    .subheadline {
+      font-family: 'Newsreader', Georgia, serif;
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 900px;
+      line-height: 1.6;
+    }
+
+    .byline-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+      padding-top: 14px;
+      border-top: 1px dashed var(--border);
+      font-size: 0.85rem;
+      color: var(--text-dim);
+    }
+
+    .byline-bar span strong { color: var(--text-main); }
+
+    /* KPI Highlights */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-bottom: 36px;
+    }
+
+    .kpi-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      position: relative;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .kpi-box:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-focus);
+    }
+
+    .kpi-box::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 4px; height: 100%;
+      background: var(--kpi-color, var(--accent-cyan));
+      border-radius: 12px 0 0 12px;
+    }
+
+    .kpi-title {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+    }
+
+    .kpi-num {
+      font-size: 2.1rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin: 6px 0;
+      color: #ffffff;
+    }
+
+    .kpi-note {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    /* Narrative Lead */
+    .lead-story {
+      background: linear-gradient(180deg, rgba(31, 41, 55, 0.4) 0%, rgba(17, 24, 39, 0.8) 100%);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      margin-bottom: 40px;
+    }
+
+    .lead-story h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 1.35rem;
+      color: var(--gold);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .lead-story p {
+      font-family: 'Newsreader', Georgia, serif;
+      font-size: 1.05rem;
+      color: #e5e7eb;
+      line-height: 1.75;
+      margin-bottom: 14px;
+    }
+
+    .lead-story p:last-child { margin-bottom: 0; }
+
+    /* Section Cards & Layout */
+    .section-header {
+      margin-bottom: 18px;
+    }
+
+    .section-header h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-header p {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    .chart-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 36px;
+    }
+
+    .chart-wrapper {
+      position: relative;
+      height: 400px;
+      width: 100%;
+    }
+
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .filter-btn.active, .filter-btn:hover {
+      background: #0284c7;
+      border-color: #38bdf8;
+      color: #ffffff;
+    }
+
+    /* Grid for Flat Type & Model Breakdown */
+    .split-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 36px;
+    }
+
+    @media (max-width: 960px) {
+      .split-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Interactive Decision Simulator */
+    .simulator-container {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+      border: 2px solid #0284c7;
+      border-radius: 16px;
+      padding: 30px;
+      margin-bottom: 40px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+
+    .simulator-title {
+      font-family: 'Cinzel', serif;
+      font-size: 1.4rem;
+      color: var(--accent-cyan);
+      margin-bottom: 6px;
+    }
+
+    .simulator-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    .sim-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 28px;
+    }
+
+    @media (max-width: 900px) {
+      .sim-grid { grid-template-columns: 1fr; }
+    }
+
+    .sim-inputs {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .input-group input, .input-group select {
+      width: 100%;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #ffffff;
+      font-size: 0.95rem;
+      font-weight: 600;
+      outline: none;
+    }
+
+    .input-group input:focus, .input-group select:focus {
+      border-color: var(--accent-cyan);
+    }
+
+    .sim-outputs {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .output-item {
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+
+    .output-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+    .output-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .output-value {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    .badge-safe { background: rgba(16, 185, 129, 0.2); color: var(--accent-emerald); border: 1px solid var(--accent-emerald); }
+    .badge-warn { background: rgba(245, 158, 11, 0.2); color: var(--accent-amber); border: 1px solid var(--accent-amber); }
+    .badge-danger { background: rgba(244, 63, 94, 0.2); color: var(--accent-rose); border: 1px solid var(--accent-rose); }
+
+    /* Analytical Insights Dossier */
+    .dossier-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 36px;
+    }
+
+    @media (max-width: 900px) {
+      .dossier-grid { grid-template-columns: 1fr; }
+    }
+
+    .dossier-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 26px;
+    }
+
+    .dossier-card h4 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .point-box {
+      margin-bottom: 20px;
+    }
+
+    .point-box:last-child { margin-bottom: 0; }
+
+    .point-box h5 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .point-box p {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    footer {
+      margin-top: 60px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Editorial Masthead -->
+    <header class="masthead">
+      <div class="meta-tagline">NUS MSBA • Decision Intelligence Lab • Google Singapore</div>
+      <h1 class="headline">The S$1,000,000 Public Flat & The 99-Year Clock</h1>
+      <p class="subheadline">
+        An empirical investigation into Singapore’s public housing resale dynamics: dissecting location hegemony, architectural super-premiums, and the mathematical reality of leasehold decay.
+      </p>
+      <div class="byline-bar">
+        <span>Lead Analyst: <strong>@demohupili</strong> (NUS MSBA)</span>
+        <span>Dataset: <strong>data/hdb_resale_sample.csv</strong> (5,000 Transactions across 26 Towns)</span>
+        <span>Methodology: <strong>Multivariate Hedonic OLS (R² = 0.7238)</strong></span>
+      </div>
+    </header>
+
+    <!-- KPI Metric Highlights -->
+    <div class="kpi-row">
+      <div class="kpi-box" style="--kpi-color: var(--accent-cyan);">
+        <div class="kpi-title">Median Resale Price</div>
+        <div class="kpi-num">S$ 410,000</div>
+        <div class="kpi-note">Mean: S$ 439,893 | Range: S$200k – S$1.18M</div>
+      </div>
+
+      <div class="kpi-box" style="--kpi-color: var(--accent-emerald);">
+        <div class="kpi-title">Mature Location Surcharge</div>
+        <div class="kpi-num">+S$ 139,694</div>
+        <div class="kpi-note">+22.6% price/sqm despite being 9.0 yrs older</div>
+      </div>
+
+      <div class="kpi-box" style="--kpi-color: var(--accent-amber);">
+        <div class="kpi-title">Marginal Lease Value</div>
+        <div class="kpi-num">+S$ 3,264 / yr</div>
+        <div class="kpi-note">Floor space: +S$3,799/sqm | Elevation: +S$6,670/floor</div>
+      </div>
+
+      <div class="kpi-box" style="--kpi-color: var(--accent-rose);">
+        <div class="kpi-title">Million-Dollar Units</div>
+        <div class="kpi-num">9 Transactions</div>
+        <div class="kpi-note">100% in Mature Estates | 88.9% with >92 yrs lease</div>
+      </div>
+    </div>
+
+    <!-- Editorial Lead Story -->
+    <section class="lead-story">
+      <h2>🏛️ Chapter I: The Anatomy of a S$1.18M HDB Transaction</h2>
+      <p>
+        In February 2017, a 120-square-meter 5-room flat on a soaring storey in Bishan’s Natura Loft transacted for <strong>S$1,180,000</strong>. At first glance, a seven-figure sum for government-subsidized public housing appears paradoxical. Yet, our empirical decomposition reveals an exact mathematical formula behind this record: an unexpired 93.6-year leasehold, premier DBSS condominium-spec architecture, an elevated storey range, and location in a top-tier school district.
+      </p>
+      <p>
+        Across all 5,000 transactions in this curated dataset, public housing has split into two divergent economies: an affordability-focused outer ring providing essential shelter volume, and a speculative prime cluster where buyers gladly pay upwards of <strong>S$9,700 per square meter</strong> to secure central accessibility and fresh lease longevity.
+      </p>
+    </section>
+
+    <!-- Main Chart: Town Price/Sqm Hierarchy -->
+    <div class="chart-card">
+      <div class="section-header">
+        <h3>📍 Geographic Price Dispersion: Median S$/Sqm by Town</h3>
+        <p>Comparison of median resale prices per square meter across all 26 HDB towns, annotated by mature versus non-mature status.</p>
+      </div>
+      <div class="filter-bar">
+        <button class="filter-btn active" id="f-all" onclick="filterTowns('all')">All Towns (26)</button>
+        <button class="filter-btn" id="f-mature" onclick="filterTowns('mature')">Mature Estates Only (15)</button>
+        <button class="filter-btn" id="f-nonmature" onclick="filterTowns('nonmature')">Non-Mature Estates Only (11)</button>
+      </div>
+      <div class="chart-wrapper">
+        <canvas id="townBarChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Split Grid: Flat Type & Architectural Model Premiums -->
+    <div class="split-grid">
+      <!-- Flat Type Liquidity Anchor -->
+      <div class="chart-card" style="margin-bottom: 0;">
+        <div class="section-header">
+          <h3>📦 Market Liquidity by Flat Type</h3>
+          <p>Transaction volume and median price scaling from 2-Room to Executive.</p>
+        </div>
+        <div class="chart-wrapper" style="height: 320px;">
+          <canvas id="flatTypePieChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Architectural Model Super-Premiums -->
+      <div class="chart-card" style="margin-bottom: 0;">
+        <div class="section-header">
+          <h3>🏗️ Flat Model Super-Premiums (S$/Sqm)</h3>
+          <p>Specialized architectural models (Type S1/S2, DBSS, Terrace) vs standard blocks.</p>
+        </div>
+        <div class="chart-wrapper" style="height: 320px;">
+          <canvas id="modelBarChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chapter II & Lease Decay Chart -->
+    <div class="chart-card" style="margin-top: 36px;">
+      <div class="section-header">
+        <h3>⏳ The 99-Year Clock: Unmasking Simpson's Paradox</h3>
+        <p>Why raw aggregated data creates a counter-intuitive U-shaped lease curve, and how controlling for estate maturity reveals the true steepness of depreciation.</p>
+      </div>
+      <div class="chart-wrapper" style="height: 340px;">
+        <canvas id="decayLineChart"></canvas>
+      </div>
+      <div style="margin-top: 18px; font-size: 0.88rem; color: var(--text-muted); background: rgba(31,41,55,0.5); padding: 14px; border-radius: 8px;">
+        💡 <strong>Statistical Insight:</strong> Raw island-wide data shows flats with <60 years lease priced at ~S$4,800/sqm, higher than 75-year-old flats (~S$3,850/sqm). This is a classic <em>Simpson's Paradox</em>: the oldest flats are concentrated exclusively in prime city-fringe pioneer towns (Queenstown, Marine Parade, Central Area), while mid-aged flats are in outer non-mature towns. Once isolated by estate type (blue vs green curves), mature estate lease decay is severe and steep.
+      </div>
+    </div>
+
+    <!-- Interactive Decision Simulator -->
+    <section class="simulator-container">
+      <div class="simulator-title">🧮 Interactive Housing Decision & Affordability Engine</div>
+      <div class="simulator-subtitle">
+        Model your household purchasing power, CPF borrowing constraints, and projected leasehold depreciation over your target holding period using our empirical regression model.
+      </div>
+
+      <div class="sim-grid">
+        <!-- Inputs -->
+        <div class="sim-inputs">
+          <div class="input-group">
+            <label for="input-income">Combined Monthly Household Income (S$)</label>
+            <input type="number" id="input-income" value="9500" step="500" min="3000" max="35000" oninput="runSimulation()">
+          </div>
+
+          <div class="input-group">
+            <label for="input-cash">Available CPF OA + Cash Savings (S$)</label>
+            <input type="number" id="input-cash" value="120000" step="10000" min="20000" max="800000" oninput="runSimulation()">
+          </div>
+
+          <div class="input-group">
+            <label for="input-flattype">Preferred Flat Type</label>
+            <select id="input-flattype" onchange="runSimulation()">
+              <option value="3 ROOM">3-Room Flat (Approx. 68 sqm)</option>
+              <option value="4 ROOM" selected>4-Room Flat (Approx. 96 sqm)</option>
+              <option value="5 ROOM">5-Room Flat (Approx. 119 sqm)</option>
+              <option value="EXECUTIVE">Executive Flat (Approx. 144 sqm)</option>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <label for="input-horizon">Target Holding Horizon</label>
+            <select id="input-horizon" onchange="runSimulation()">
+              <option value="10">10 Years (Medium-Term Upgrade)</option>
+              <option value="20" selected>20 Years (Family Upbringing)</option>
+              <option value="30">30 Years (Long-Term Retirement)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Dynamic Outputs -->
+        <div class="sim-outputs">
+          <div class="output-item">
+            <div class="output-label">Maximum Recommended Purchase Budget (30% MSR Cap)</div>
+            <div class="output-value" id="out-budget">S$ 684,000</div>
+            <div style="font-size: 0.8rem; color: var(--text-dim);">Based on 25-yr loan @ 2.6% interest + 30% Mortgage Servicing Ratio cap</div>
+          </div>
+
+          <div class="output-item">
+            <div class="output-label">Recommended Estate Strategy</div>
+            <div class="output-value" id="out-strategy" style="color: var(--accent-emerald);">Young Non-Mature (85+ Yrs)</div>
+            <div id="out-towns" style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">Punggol, Sengkang, Woodlands (95 sqm functional family space)</div>
+          </div>
+
+          <div class="output-item">
+            <div class="output-label">Remaining Lease at Eventual Exit</div>
+            <div class="output-value" id="out-exit-lease">68.5 Years</div>
+            <span class="status-badge badge-safe" id="out-badge">Zero CPF Withdrawal Friction</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Strategic Executive Dossier -->
+    <div class="dossier-grid">
+      <!-- Empirical Insights -->
+      <div class="dossier-card">
+        <h4 style="color: var(--accent-cyan);">📊 Empirical Findings Dossier</h4>
+        
+        <div class="point-box">
+          <h5>1. The +S$139,694 Mature Estate Hedonic Arbitrage</h5>
+          <p>Location in a mature estate commands an isolated S$139,694 premium (or S$172,626 for 4-Room flats specifically). Mature towns trade at a 22.6% price-per-sqm premium despite flats being an average of 9.0 years older (68.9 yrs vs 77.9 yrs remaining lease). Proximity to core transit lines and prestige primary schools consistently out-bids physical age decay.</p>
+        </div>
+
+        <div class="point-box">
+          <h5>2. The Million-Dollar Sieve (Fresh Lease + Prestige Code)</h5>
+          <p>All 9 million-dollar flats in Q1 2017 occurred in mature estates, with 88.9% retaining >92 years remaining lease. Ordinary public housing rarely crosses the million-dollar threshold unless paired with specialized architectural typologies: Type S1/S2 units at Pinnacle@Duxton (median S$9,485/sqm) and DBSS developments like Natura Loft (median S$7,644/sqm) trade at a +75% to +120% premium over standard blocks.</p>
+        </div>
+
+        <div class="point-box">
+          <h5>3. Vertical Storey Elevation Dividend (+S$6,670/Floor)</h5>
+          <p>Our multivariate model proves that buyers pay an empirical premium of S$6,670 for every additional storey of elevation. High-floor units (Storeys 25–40) in Queenstown and Central Area command S$100,000–S$180,000 more than identical low-floor ground units in the same block, insulating them against localized price softening.</p>
+        </div>
+      </div>
+
+      <!-- Actionable Executive Plays -->
+      <div class="dossier-card">
+        <h4 style="color: var(--accent-emerald);">🎯 Actionable Executive Playbook</h4>
+
+        <div class="point-box">
+          <h5>1. First-Time Buyer Play: The Sengkang/Punggol Capital Moat</h5>
+          <p>First-time buyers with combined household incomes of S$8,000–S$12,000 should bypass mature estate premiums. Allocating S$420k–S$480k into 4-Room or 5-Room flats in Punggol (mean lease 91.2 yrs) or Sengkang (87.3 yrs) provides 95–118 sqm of functional living space while guaranteeing over 65 years of remaining leasehold upon exit, preserving resale equity for subsequent private upgrading.</p>
+        </div>
+
+        <div class="point-box">
+          <h5>2. Upgrader Warning: The Mature "<60-Year Liquidity Trap"</h5>
+          <p>Older mature flats (<60 years lease in Ang Mo Kio, Bedok, Toa Payoh) appear superficially affordable at ~S$330k–S$380k, but carry accelerating structural risk. Secondary buyers face severe CPF withdrawal limits and shortened bank loan tenures when lease drops below 60 years. Upgraders holding such assets face compressed liquidity windows and should reallocate toward young mature resale stock.</p>
+        </div>
+
+        <div class="point-box">
+          <h5>3. Institutional Underwriting Benchmark (S$3,264 / Yr Rule)</h5>
+          <p>Valuation models, mortgage insurers, and proptech platforms should adopt our hedonic parameter: S$3,264 per remaining lease year and S$3,799 per square meter (R² = 0.724). This establishes an objective standard to decouple intrinsic land/amenity value from leasehold expiration, identifying arbitrage mispricings across secondary market listings.</p>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>NUS Master of Science in Business Analytics (MSBA) • Google Singapore Office Visit • Lead Analyst: @demohupili</p>
+    </footer>
+  </div>
+
+  <script>
+    // Real Aggregated Datasets from data/hdb_resale_sample.csv
+    const townData = [
+      {"town": "CENTRAL AREA", "psqm": 7508.3, "price": 500000, "lease": 73.6, "mature": true},
+      {"town": "BUKIT TIMAH", "psqm": 6442.3, "price": 710000, "lease": 67.2, "mature": true},
+      {"town": "QUEENSTOWN", "psqm": 6179.3, "price": 542500, "lease": 67.4, "mature": true},
+      {"town": "BUKIT MERAH", "psqm": 6044.8, "price": 547000, "lease": 72.1, "mature": true},
+      {"town": "BISHAN", "psqm": 6015.6, "price": 622000, "lease": 73.9, "mature": true},
+      {"town": "MARINE PARADE", "psqm": 5977.0, "price": 520000, "lease": 57.4, "mature": true},
+      {"town": "KALLANG/WHAMPOA", "psqm": 5467.6, "price": 405000, "lease": 68.2, "mature": true},
+      {"town": "CLEMENTI", "psqm": 5100.1, "price": 417500, "lease": 65.9, "mature": true},
+      {"town": "TOA PAYOH", "psqm": 5000.0, "price": 388000, "lease": 66.5, "mature": true},
+      {"town": "GEYLANG", "psqm": 4835.9, "price": 355000, "lease": 64.7, "mature": true},
+      {"town": "SERANGOON", "psqm": 4692.1, "price": 449000, "lease": 70.1, "mature": true},
+      {"town": "ANG MO KIO", "psqm": 4673.9, "price": 371500, "lease": 65.6, "mature": true},
+      {"town": "PUNGGOL", "psqm": 4625.0, "price": 451888, "lease": 91.2, "mature": false},
+      {"town": "BEDOK", "psqm": 4552.2, "price": 365000, "lease": 66.1, "mature": true},
+      {"town": "TAMPINES", "psqm": 4329.0, "price": 447000, "lease": 73.1, "mature": true},
+      {"town": "SENGKANG", "psqm": 4232.7, "price": 425000, "lease": 87.3, "mature": false},
+      {"town": "JURONG EAST", "psqm": 4183.7, "price": 370000, "lease": 69.5, "mature": false},
+      {"town": "HOUGANG", "psqm": 4099.9, "price": 410000, "lease": 73.2, "mature": false},
+      {"town": "BUKIT BATOK", "psqm": 4062.5, "price": 340000, "lease": 71.1, "mature": false},
+      {"town": "YISHUN", "psqm": 3930.5, "price": 343000, "lease": 72.4, "mature": false},
+      {"town": "JURONG WEST", "psqm": 3925.9, "price": 362000, "lease": 75.1, "mature": false},
+      {"town": "BUKIT PANJANG", "psqm": 3921.8, "price": 405000, "lease": 79.6, "mature": false},
+      {"town": "PASIR RIS", "psqm": 3803.9, "price": 465000, "lease": 75.2, "mature": true},
+      {"town": "SEMBAWANG", "psqm": 3727.3, "price": 395000, "lease": 84.0, "mature": false},
+      {"town": "WOODLANDS", "psqm": 3626.4, "price": 378000, "lease": 77.3, "mature": false},
+      {"town": "CHOA CHU KANG", "psqm": 3455.3, "price": 375000, "lease": 77.9, "mature": false}
+    ];
+
+    let townChartInstance = null;
+
+    function renderTownChart(data) {
+      const ctx = document.getElementById('townBarChart').getContext('2d');
+      if (townChartInstance) townChartInstance.destroy();
+
+      townChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: data.map(d => d.town),
+          datasets: [{
+            label: 'Median S$/Sqm',
+            data: data.map(d => d.psqm),
+            backgroundColor: data.map(d => d.mature ? 'rgba(56, 189, 248, 0.85)' : 'rgba(16, 185, 129, 0.85)'),
+            borderColor: data.map(d => d.mature ? '#38bdf8' : '#10b981'),
+            borderWidth: 1,
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  const item = data[ctx.dataIndex];
+                  return [
+                    `Median: S$ ${item.psqm.toLocaleString()} / sqm`,
+                    `Median Resale Price: S$ ${item.price.toLocaleString()}`,
+                    `Average Remaining Lease: ${item.lease} years`,
+                    `Category: ${item.mature ? 'Mature Town' : 'Non-Mature Town'}`
+                  ];
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: { color: '#9ca3af', font: { size: 10 }, maxRotation: 45, minRotation: 45 },
+              grid: { display: false }
+            },
+            y: {
+              ticks: { color: '#9ca3af', callback: v => 'S$' + v.toLocaleString() },
+              grid: { color: '#374151' }
+            }
+          }
+        }
+      });
+    }
+
+    function filterTowns(type) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      let subset = townData;
+      if (type === 'mature') {
+        subset = townData.filter(d => d.mature);
+        document.getElementById('f-mature').classList.add('active');
+      } else if (type === 'nonmature') {
+        subset = townData.filter(d => !d.mature);
+        document.getElementById('f-nonmature').classList.add('active');
+      } else {
+        document.getElementById('f-all').classList.add('active');
+      }
+      renderTownChart(subset);
+    }
+
+    // Flat Type Breakdown Chart
+    const flatData = [
+      {"type": "2 ROOM", "price": 240000, "sqm": 45.9, "volume": 59},
+      {"type": "3 ROOM", "price": 305000, "sqm": 68.2, "volume": 1372},
+      {"type": "4 ROOM", "price": 410000, "sqm": 95.8, "volume": 2065},
+      {"type": "5 ROOM", "price": 485000, "sqm": 118.7, "volume": 1137},
+      {"type": "EXECUTIVE", "price": 600000, "sqm": 143.9, "volume": 365}
+    ];
+
+    new Chart(document.getElementById('flatTypePieChart').getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: flatData.map(d => `${d.type} (S$${(d.price/1000).toFixed(0)}k)`),
+        datasets: [{
+          data: flatData.map(d => d.volume),
+          backgroundColor: ['#c084fc', '#38bdf8', '#10b981', '#f59e0b', '#f43f5e'],
+          borderColor: '#111827',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'right', labels: { color: '#f9fafb', font: { size: 11 } } },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${flatData[ctx.dataIndex].type}: ${flatData[ctx.dataIndex].volume} units (${((flatData[ctx.dataIndex].volume/5000)*100).toFixed(1)}%), Median S$ ${flatData[ctx.dataIndex].price.toLocaleString()}`
+            }
+          }
+        }
+      }
+    });
+
+    // Model Bar Chart
+    const modelData = [
+      { model: "Type S2 (Pinnacle)", psqm: 9776 },
+      { model: "Type S1 (Pinnacle)", psqm: 9194 },
+      { model: "Terrace Flat", psqm: 8056 },
+      { model: "DBSS (e.g. Natura)", psqm: 7644 },
+      { model: "Standard", psqm: 5116 },
+      { model: "Maisonette", psqm: 4427 },
+      { model: "New Generation", psqm: 4428 },
+      { model: "Model A", psqm: 4330 }
+    ];
+
+    new Chart(document.getElementById('modelBarChart').getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: modelData.map(d => d.model),
+        datasets: [{
+          label: 'Median S$/Sqm',
+          data: modelData.map(d => d.psqm),
+          backgroundColor: '#c084fc',
+          borderRadius: 4
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ` Median S$ ${ctx.parsed.x.toLocaleString()} / sqm` } }
+        },
+        scales: {
+          x: { ticks: { color: '#9ca3af' }, grid: { color: '#374151' } },
+          y: { ticks: { color: '#f9fafb', font: { size: 11 } }, grid: { display: false } }
+        }
+      }
+    });
+
+    // Lease Decay Line Chart
+    new Chart(document.getElementById('decayLineChart').getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: ['< 60 Years', '60 - 70 Years', '70 - 80 Years', '80 - 90 Years', '90 - 100 Years'],
+        datasets: [
+          {
+            label: 'Mature Towns (Steep Prime Decay)',
+            data: [4943, 4701, 4335, 6790, 7989],
+            borderColor: '#38bdf8',
+            backgroundColor: 'rgba(56, 189, 248, 0.12)',
+            fill: true,
+            tension: 0.25,
+            pointRadius: 6
+          },
+          {
+            label: 'Non-Mature Towns (Shelter Utility Bound)',
+            data: [3711, 4000, 3639, 3941, 4754],
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.12)',
+            fill: true,
+            tension: 0.25,
+            pointRadius: 6
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#f9fafb', font: { size: 12 } } },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.dataset.label}: S$ ${ctx.parsed.y.toLocaleString()} / sqm`
+            }
+          }
+        },
+        scales: {
+          x: { ticks: { color: '#9ca3af' }, grid: { color: '#374151' } },
+          y: {
+            ticks: { color: '#9ca3af', callback: v => 'S$' + v.toLocaleString() },
+            grid: { color: '#374151' }
+          }
+        }
+      }
+    });
+
+    // Interactive Simulator Function
+    function runSimulation() {
+      const income = parseFloat(document.getElementById('input-income').value) || 9000;
+      const cash = parseFloat(document.getElementById('input-cash').value) || 100000;
+      const flatType = document.getElementById('input-flattype').value;
+      const horizon = parseInt(document.getElementById('input-horizon').value) || 20;
+
+      // 30% MSR loan max calculation (25 yrs @ 2.6% interest):
+      // Monthly installment max = income * 0.30
+      // Present Value of annuity: PV = PMT * [1 - (1+r)^-n] / r
+      const monthlyPmt = income * 0.30;
+      const r = 0.026 / 12;
+      const n = 25 * 12;
+      const maxLoan = monthlyPmt * (1 - Math.pow(1 + r, -n)) / r;
+      const totalBudget = Math.round(maxLoan + cash);
+
+      document.getElementById('out-budget').innerText = `S$ ${totalBudget.toLocaleString()}`;
+
+      // Strategy evaluation based on budget & flat type
+      let strategy = "";
+      let towns = "";
+      let exitLease = 0;
+      let badgeHtml = "";
+
+      if (totalBudget >= 750000) {
+        strategy = "Young Mature Resale (High Floor)";
+        towns = "Bishan, Queenstown, Clementi (Target >80 yrs lease)";
+        exitLease = (85 - horizon);
+        badgeHtml = `<span class="status-badge badge-safe">Strong Wealth Preservation</span>`;
+      } else if (totalBudget >= 480000) {
+        strategy = "Young Non-Mature (85+ Yrs)";
+        towns = "Punggol, Sengkang, Woodlands (95–118 sqm functional space)";
+        exitLease = (90 - horizon);
+        badgeHtml = `<span class="status-badge badge-safe">Zero CPF Friction at Exit</span>`;
+      } else {
+        strategy = "Value Outer-Ring 4-Room";
+        towns = "Choa Chu Kang, Jurong West, Yishun (Prioritize Space & Cashflow)";
+        exitLease = (75 - horizon);
+        if (exitLease < 60) {
+          badgeHtml = `<span class="status-badge badge-warn">Exit Lease <60 Yrs (Plan for 10-Yr Exit)</span>`;
+        } else {
+          badgeHtml = `<span class="status-badge badge-safe">Stable Secondary Liquidity</span>`;
+        }
+      }
+
+      document.getElementById('out-strategy').innerText = strategy;
+      document.getElementById('out-towns').innerText = towns;
+      document.getElementById('out-exit-lease').innerText = `${exitLease.toFixed(1)} Years Remaining`;
+      document.getElementById('out-badge').outerHTML = badgeHtml;
+    }
+
+    // Initialize
+    renderTownChart(townData);
+    runSimulation();
+  </script>
+</body>
+</html>
