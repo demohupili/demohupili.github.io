@@ -17,6 +17,9 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+  <!-- Singapore Master Plan Planning Areas GeoJSON Data -->
+  <script src="singapore_towns.js"></script>
+
   <style>
     :root {
       --bg-canvas: #f0f2f5;
@@ -590,8 +593,8 @@
     <!-- GEOSPATIAL MAP SECTION -->
     <section class="map-card">
       <div class="section-header">
-        <h3>🗺️ Interactive Geospatial Map: Singapore HDB Resale Pricing Landscape</h3>
-        <p>Explore geographic price gradients across Singapore's 26 HDB towns. Circle sizes and colors dynamically scale with market values. Click any circle to inspect localized metrics.</p>
+        <h3>🗺️ Interactive Choropleth & Geospatial Map: Singapore HDB Resale Pricing Landscape</h3>
+        <p>Explore geographic price gradients across Singapore's 26 HDB towns rendered on official <strong>URA Master Plan Planning Area Boundaries</strong>. Toggle between full polygon choropleth shading, proportional centroid bubbles, or a combined view.</p>
       </div>
 
       <div class="map-controls-bar">
@@ -601,13 +604,24 @@
           <button class="filter-btn" id="map-f-nonmature" onclick="filterMapTowns('nonmature')">Non-Mature Only (11)</button>
         </div>
 
-        <div>
-          <label style="font-size: 0.84rem; font-weight: 700; color: var(--text-muted); margin-right: 6px;">COLOR MAP BY:</label>
-          <select id="map-metric-select" class="map-mode-select" onchange="updateMapVisuals()">
-            <option value="psqm" selected>Median Price / Sqm (S$)</option>
-            <option value="price">Median Resale Price (S$)</option>
-            <option value="lease">Mean Remaining Lease (Years)</option>
-          </select>
+        <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+          <div>
+            <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-right: 6px;">DISPLAY MODE:</label>
+            <select id="map-display-mode" class="map-mode-select" onchange="updateMapVisuals()">
+              <option value="choropleth" selected>Choropleth Polygons (URA Boundary)</option>
+              <option value="bubbles">Centroid Value Bubbles</option>
+              <option value="both">Combined (Choropleth + Bubbles)</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-right: 6px;">METRIC:</label>
+            <select id="map-metric-select" class="map-mode-select" onchange="updateMapVisuals()">
+              <option value="psqm" selected>Median Price / Sqm (S$)</option>
+              <option value="price">Median Resale Price (S$)</option>
+              <option value="lease">Mean Remaining Lease (Years)</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -824,11 +838,13 @@
     ];
 
     // ==========================================
-    // LEAFLET MAP INITIALIZATION & LOGIC
+    // LEAFLET MAP INITIALIZATION & CHOROPLETH LOGIC
     // ==========================================
     let map = null;
     let mapMarkers = [];
+    let choroplethLayer = null;
     let currentMapFilter = 'all';
+    let legendControl = null;
 
     function initMap() {
       // Singapore center coordinates
@@ -857,22 +873,46 @@
         "Clean Light Canvas (Esri)": esriCanvas
       }, null, { position: 'topright' }).addTo(map);
 
-      // Add custom legend
-      const legend = L.control({ position: 'bottomright' });
-      legend.onAdd = function() {
+      // Create dynamic legend control
+      legendControl = L.control({ position: 'bottomright' });
+      legendControl.onAdd = function() {
         const div = L.DomUtil.create('div', 'map-legend');
+        div.id = 'dynamic-map-legend';
+        return div;
+      };
+      legendControl.addTo(map);
+
+      updateMapVisuals();
+    }
+
+    function updateLegend(metric) {
+      const div = document.getElementById('dynamic-map-legend');
+      if (!div) return;
+      if (metric === 'psqm') {
         div.innerHTML = `
-          <strong style="display:block; margin-bottom: 6px;">Pricing Density</strong>
+          <strong style="display:block; margin-bottom: 6px;">Median S$ / Sqm</strong>
           <div class="legend-item"><span class="legend-color" style="background: #e41e3f;"></span> > S$ 6,000 / sqm</div>
           <div class="legend-item"><span class="legend-color" style="background: #f7b125;"></span> S$ 5,000 – 6,000</div>
           <div class="legend-item"><span class="legend-color" style="background: #1877f2;"></span> S$ 4,000 – 5,000</div>
           <div class="legend-item"><span class="legend-color" style="background: #31a24c;"></span> < S$ 4,000 / sqm</div>
         `;
-        return div;
-      };
-      legend.addTo(map);
-
-      updateMapVisuals();
+      } else if (metric === 'price') {
+        div.innerHTML = `
+          <strong style="display:block; margin-bottom: 6px;">Median Resale Price</strong>
+          <div class="legend-item"><span class="legend-color" style="background: #e41e3f;"></span> > S$ 600,000</div>
+          <div class="legend-item"><span class="legend-color" style="background: #f7b125;"></span> S$ 450,000 – 600,000</div>
+          <div class="legend-item"><span class="legend-color" style="background: #1877f2;"></span> S$ 380,000 – 450,000</div>
+          <div class="legend-item"><span class="legend-color" style="background: #31a24c;"></span> < S$ 380,000</div>
+        `;
+      } else {
+        div.innerHTML = `
+          <strong style="display:block; margin-bottom: 6px;">Remaining Leasehold</strong>
+          <div class="legend-item"><span class="legend-color" style="background: #31a24c;"></span> > 85 Years (Fresh)</div>
+          <div class="legend-item"><span class="legend-color" style="background: #1877f2;"></span> 70 – 85 Years</div>
+          <div class="legend-item"><span class="legend-color" style="background: #f7b125;"></span> 65 – 70 Years</div>
+          <div class="legend-item"><span class="legend-color" style="background: #e41e3f;"></span> < 65 Years (Aging)</div>
+        `;
+      }
     }
 
     function getMarkerColor(val, metric) {
@@ -907,58 +947,137 @@
     function updateMapVisuals() {
       if (!map) return;
       const metric = document.getElementById('map-metric-select').value;
+      const displayMode = document.getElementById('map-display-mode').value;
 
-      // Clear previous markers
+      updateLegend(metric);
+
+      // Clear previous layers
+      if (choroplethLayer) {
+        map.removeLayer(choroplethLayer);
+        choroplethLayer = null;
+      }
       mapMarkers.forEach(m => map.removeLayer(m));
       mapMarkers = [];
 
-      let dataset = townData;
-      if (currentMapFilter === 'mature') dataset = townData.filter(d => d.mature);
-      if (currentMapFilter === 'nonmature') dataset = townData.filter(d => !d.mature);
+      // 1. CHOROPLETH POLYGONS LAYER
+      if ((displayMode === 'choropleth' || displayMode === 'both') && window.sgTownsGeoJson) {
+        choroplethLayer = L.geoJSON(window.sgTownsGeoJson, {
+          filter: function(feature) {
+            const props = feature.properties;
+            if (currentMapFilter === 'mature') return props.mature === true;
+            if (currentMapFilter === 'nonmature') return props.mature === false;
+            return true;
+          },
+          style: function(feature) {
+            const val = feature.properties[metric];
+            const color = getMarkerColor(val, metric);
+            return {
+              fillColor: color,
+              weight: 1.5,
+              opacity: 1,
+              color: '#ffffff',
+              dashArray: '2',
+              fillOpacity: 0.65
+            };
+          },
+          onEachFeature: function(feature, layer) {
+            const props = feature.properties;
+            let metricDisplay = `S$ ${props.psqm.toLocaleString()} / sqm`;
+            if (metric === 'price') metricDisplay = `S$ ${props.price.toLocaleString()}`;
+            if (metric === 'lease') metricDisplay = `${props.lease} yrs lease`;
 
-      dataset.forEach(item => {
-        const val = item[metric];
-        const color = getMarkerColor(val, metric);
-        const radius = getMarkerRadius(val, metric);
+            layer.bindTooltip(`<strong>${props.town}</strong> (${props.pln_area}): ${metricDisplay}`, {
+              sticky: true,
+              direction: 'auto'
+            });
 
-        const circle = L.circleMarker([item.lat, item.lon], {
-          radius: radius,
-          fillColor: color,
-          color: '#ffffff',
-          weight: 2,
-          opacity: 0.95,
-          fillOpacity: 0.78
+            layer.on({
+              mouseover: function(e) {
+                const l = e.target;
+                l.setStyle({
+                  weight: 3.5,
+                  color: '#050505',
+                  dashArray: '',
+                  fillOpacity: 0.85
+                });
+                if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+                  l.bringToFront();
+                }
+              },
+              mouseout: function(e) {
+                choroplethLayer.resetStyle(e.target);
+              },
+              click: function(e) {
+                map.fitBounds(e.target.getBounds());
+                const popupContent = `
+                  <div style="font-family: system-ui; min-width: 210px;">
+                    <h4 style="margin: 0 0 4px 0; font-size: 1.05rem; color: #050505;">${props.town}</h4>
+                    <div style="font-size: 0.78rem; color: #65676b; margin-bottom: 6px;">Planning Area: <strong>${props.pln_area}</strong></div>
+                    <span style="display:inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.72rem; font-weight: 700; background: ${props.mature ? '#e7f3ff' : '#e7f8ed'}; color: ${props.mature ? '#1877f2' : '#248a3d'}; margin-bottom: 8px;">
+                      ${props.mature ? 'Mature Estate' : 'Non-Mature Estate'}
+                    </span>
+                    <div style="font-size: 0.84rem; line-height: 1.5; color: #050505;">
+                      <div><strong>Median PSQM:</strong> S$ ${props.psqm.toLocaleString()} / sqm</div>
+                      <div><strong>Median Resale:</strong> S$ ${props.price.toLocaleString()}</div>
+                      <div><strong>Mean Remaining Lease:</strong> ${props.lease} years</div>
+                      <div><strong>Transaction Volume:</strong> ${props.count} units</div>
+                    </div>
+                  </div>
+                `;
+                L.popup().setLatLng(e.latlng).setContent(popupContent).openOn(map);
+              }
+            });
+          }
         }).addTo(map);
+      }
 
-        // Tooltip
-        let metricDisplay = `S$ ${item.psqm.toLocaleString()} / sqm`;
-        if (metric === 'price') metricDisplay = `S$ ${item.price.toLocaleString()}`;
-        if (metric === 'lease') metricDisplay = `${item.lease} yrs lease`;
+      // 2. CENTROID PROPORTIONAL BUBBLES LAYER
+      if (displayMode === 'bubbles' || displayMode === 'both') {
+        let dataset = townData;
+        if (currentMapFilter === 'mature') dataset = townData.filter(d => d.mature);
+        if (currentMapFilter === 'nonmature') dataset = townData.filter(d => !d.mature);
 
-        circle.bindTooltip(`<strong>${item.town}</strong>: ${metricDisplay}`, {
-          direction: 'top',
-          offset: [0, -radius]
-        });
+        dataset.forEach(item => {
+          const val = item[metric];
+          const color = getMarkerColor(val, metric);
+          const radius = getMarkerRadius(val, metric);
 
-        // Popup
-        const popupHtml = `
-          <div style="font-family: system-ui; min-width: 190px;">
-            <h4 style="margin: 0 0 6px 0; font-size: 1.05rem; color: #050505;">${item.town}</h4>
-            <span style="display:inline-block; padding: 3px 9px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; background: ${item.mature ? '#e7f3ff' : '#e7f8ed'}; color: ${item.mature ? '#1877f2' : '#248a3d'}; margin-bottom: 8px;">
-              ${item.mature ? 'Mature Town' : 'Non-Mature Town'}
-            </span>
-            <div style="font-size: 0.85rem; line-height: 1.5; color: #65676b;">
-              <div><strong>Median PSQM:</strong> S$ ${item.psqm.toLocaleString()} / sqm</div>
-              <div><strong>Median Resale:</strong> S$ ${item.price.toLocaleString()}</div>
-              <div><strong>Mean Lease:</strong> ${item.lease} years</div>
-              <div><strong>Sample Volume:</strong> ${item.count} units</div>
+          const circle = L.circleMarker([item.lat, item.lon], {
+            radius: radius,
+            fillColor: color,
+            color: '#ffffff',
+            weight: 2,
+            opacity: 0.95,
+            fillOpacity: displayMode === 'both' ? 0.9 : 0.8
+          }).addTo(map);
+
+          let metricDisplay = `S$ ${item.psqm.toLocaleString()} / sqm`;
+          if (metric === 'price') metricDisplay = `S$ ${item.price.toLocaleString()}`;
+          if (metric === 'lease') metricDisplay = `${item.lease} yrs lease`;
+
+          circle.bindTooltip(`<strong>${item.town}</strong>: ${metricDisplay}`, {
+            direction: 'top',
+            offset: [0, -radius]
+          });
+
+          const popupHtml = `
+            <div style="font-family: system-ui; min-width: 190px;">
+              <h4 style="margin: 0 0 6px 0; font-size: 1.05rem; color: #050505;">${item.town}</h4>
+              <span style="display:inline-block; padding: 3px 9px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; background: ${item.mature ? '#e7f3ff' : '#e7f8ed'}; color: ${item.mature ? '#1877f2' : '#248a3d'}; margin-bottom: 8px;">
+                ${item.mature ? 'Mature Town' : 'Non-Mature Town'}
+              </span>
+              <div style="font-size: 0.85rem; line-height: 1.5; color: #65676b;">
+                <div><strong>Median PSQM:</strong> S$ ${item.psqm.toLocaleString()} / sqm</div>
+                <div><strong>Median Resale:</strong> S$ ${item.price.toLocaleString()}</div>
+                <div><strong>Mean Lease:</strong> ${item.lease} years</div>
+                <div><strong>Sample Volume:</strong> ${item.count} units</div>
+              </div>
             </div>
-          </div>
-        `;
-        circle.bindPopup(popupHtml);
-
-        mapMarkers.push(circle);
-      });
+          `;
+          circle.bindPopup(popupHtml);
+          mapMarkers.push(circle);
+        });
+      }
     }
 
     function filterMapTowns(type) {
