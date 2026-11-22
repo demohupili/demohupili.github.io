@@ -13,6 +13,10 @@
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
+  <!-- Leaflet.js CDN -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
   <style>
     :root {
       --bg-canvas: #f0f2f5;
@@ -56,7 +60,7 @@
       border-bottom: 1px solid var(--border);
       position: sticky;
       top: 0;
-      z-index: 100;
+      z-index: 1000;
       box-shadow: var(--shadow-sm);
     }
 
@@ -232,6 +236,44 @@
     }
 
     .lead-story p:last-child { margin-bottom: 0; }
+
+    /* Interactive Map Card */
+    .map-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    #hdb-map {
+      height: 480px;
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      z-index: 10;
+    }
+
+    .map-controls-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .map-mode-select {
+      background: var(--bg-canvas);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-main);
+      outline: none;
+    }
 
     /* Chart Cards */
     .chart-card {
@@ -457,6 +499,31 @@
       line-height: 1.6;
     }
 
+    /* Map Legend Custom Control */
+    .map-legend {
+      background: #ffffff;
+      padding: 10px 14px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      font-size: 0.78rem;
+      line-height: 1.5;
+      color: #050505;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .legend-color {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
     footer {
       margin-top: 48px;
       padding-top: 20px;
@@ -473,7 +540,7 @@
     <div class="fb-top-inner">
       <div class="fb-logo-group">
         <div class="fb-logo-badge">f</div>
-        <div class="fb-logo-text">facebook • Decision Intelligence</div>
+        <div class="fb-logo-text">facebook • Geospatial Intelligence</div>
       </div>
       <div class="fb-nav-tag">NUS MSBA • Google Singapore Lab</div>
     </div>
@@ -484,7 +551,7 @@
     <header class="masthead-card">
       <h1 class="headline">The S$1,000,000 Public Flat & The 99-Year Clock</h1>
       <p class="subheadline">
-        An empirical investigation into Singapore’s public housing resale dynamics: dissecting location hegemony, architectural super-premiums, and the mathematical reality of leasehold decay.
+        An empirical investigation into Singapore’s public housing resale dynamics: dissecting location hegemony, architectural super-premiums, and the mathematical reality of leasehold decay across all 26 HDB towns.
       </p>
       <div class="byline-bar">
         <span>Lead Analyst: <strong>@demohupili</strong> (NUS MSBA)</span>
@@ -520,7 +587,35 @@
       </div>
     </div>
 
-    <!-- Editorial Lead Story -->
+    <!-- GEOSPATIAL MAP SECTION -->
+    <section class="map-card">
+      <div class="section-header">
+        <h3>🗺️ Interactive Geospatial Map: Singapore HDB Resale Pricing Landscape</h3>
+        <p>Explore geographic price gradients across Singapore's 26 HDB towns. Circle sizes and colors dynamically scale with market values. Click any circle to inspect localized metrics.</p>
+      </div>
+
+      <div class="map-controls-bar">
+        <div class="filter-bar" style="margin-bottom: 0;">
+          <button class="filter-btn active" id="map-f-all" onclick="filterMapTowns('all')">All Towns (26)</button>
+          <button class="filter-btn" id="map-f-mature" onclick="filterMapTowns('mature')">Mature Estates Only (15)</button>
+          <button class="filter-btn" id="map-f-nonmature" onclick="filterMapTowns('nonmature')">Non-Mature Only (11)</button>
+        </div>
+
+        <div>
+          <label style="font-size: 0.84rem; font-weight: 700; color: var(--text-muted); margin-right: 6px;">COLOR MAP BY:</label>
+          <select id="map-metric-select" class="map-mode-select" onchange="updateMapVisuals()">
+            <option value="psqm" selected>Median Price / Sqm (S$)</option>
+            <option value="price">Median Resale Price (S$)</option>
+            <option value="lease">Mean Remaining Lease (Years)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Leaflet Map Container -->
+      <div id="hdb-map"></div>
+    </section>
+
+    <!-- Narrative Lead Banner -->
     <section class="lead-story">
       <h2>🏛️ Chapter I: The Anatomy of a S$1.18M HDB Transaction</h2>
       <p>
@@ -531,7 +626,7 @@
       </p>
     </section>
 
-    <!-- Main Chart: Town Price/Sqm Hierarchy -->
+    <!-- Bar Chart: Town Price/Sqm Hierarchy -->
     <div class="chart-card">
       <div class="section-header">
         <h3>📍 Geographic Price Dispersion: Median S$/Sqm by Town</h3>
@@ -698,35 +793,173 @@
   </div>
 
   <script>
+    // 26 Towns Geospatial Dataset
     const townData = [
-      {"town": "CENTRAL AREA", "psqm": 7508.3, "price": 500000, "lease": 73.6, "mature": true},
-      {"town": "BUKIT TIMAH", "psqm": 6442.3, "price": 710000, "lease": 67.2, "mature": true},
-      {"town": "QUEENSTOWN", "psqm": 6179.3, "price": 542500, "lease": 67.4, "mature": true},
-      {"town": "BUKIT MERAH", "psqm": 6044.8, "price": 547000, "lease": 72.1, "mature": true},
-      {"town": "BISHAN", "psqm": 6015.6, "price": 622000, "lease": 73.9, "mature": true},
-      {"town": "MARINE PARADE", "psqm": 5977.0, "price": 520000, "lease": 57.4, "mature": true},
-      {"town": "KALLANG/WHAMPOA", "psqm": 5467.6, "price": 405000, "lease": 68.2, "mature": true},
-      {"town": "CLEMENTI", "psqm": 5100.1, "price": 417500, "lease": 65.9, "mature": true},
-      {"town": "TOA PAYOH", "psqm": 5000.0, "price": 388000, "lease": 66.5, "mature": true},
-      {"town": "GEYLANG", "psqm": 4835.9, "price": 355000, "lease": 64.7, "mature": true},
-      {"town": "SERANGOON", "psqm": 4692.1, "price": 449000, "lease": 70.1, "mature": true},
-      {"town": "ANG MO KIO", "psqm": 4673.9, "price": 371500, "lease": 65.6, "mature": true},
-      {"town": "PUNGGOL", "psqm": 4625.0, "price": 451888, "lease": 91.2, "mature": false},
-      {"town": "BEDOK", "psqm": 4552.2, "price": 365000, "lease": 66.1, "mature": true},
-      {"town": "TAMPINES", "psqm": 4329.0, "price": 447000, "lease": 73.1, "mature": true},
-      {"town": "SENGKANG", "psqm": 4232.7, "price": 425000, "lease": 87.3, "mature": false},
-      {"town": "JURONG EAST", "psqm": 4183.7, "price": 370000, "lease": 69.5, "mature": false},
-      {"town": "HOUGANG", "psqm": 4099.9, "price": 410000, "lease": 73.2, "mature": false},
-      {"town": "BUKIT BATOK", "psqm": 4062.5, "price": 340000, "lease": 71.1, "mature": false},
-      {"town": "YISHUN", "psqm": 3930.5, "price": 343000, "lease": 72.4, "mature": false},
-      {"town": "JURONG WEST", "psqm": 3925.9, "price": 362000, "lease": 75.1, "mature": false},
-      {"town": "BUKIT PANJANG", "psqm": 3921.8, "price": 405000, "lease": 79.6, "mature": false},
-      {"town": "PASIR RIS", "psqm": 3803.9, "price": 465000, "lease": 75.2, "mature": true},
-      {"town": "SEMBAWANG", "psqm": 3727.3, "price": 395000, "lease": 84.0, "mature": false},
-      {"town": "WOODLANDS", "psqm": 3626.4, "price": 378000, "lease": 77.3, "mature": false},
-      {"town": "CHOA CHU KANG", "psqm": 3455.3, "price": 375000, "lease": 77.9, "mature": false}
+      {"town": "CENTRAL AREA", "count": 69, "psqm": 7508.3, "price": 500000, "lease": 73.6, "mature": true, "lat": 1.2855, "lon": 103.848},
+      {"town": "BUKIT TIMAH", "count": 19, "psqm": 6442.3, "price": 710000, "lease": 67.2, "mature": true, "lat": 1.3329, "lon": 103.7744},
+      {"town": "QUEENSTOWN", "count": 104, "psqm": 6179.3, "price": 542500, "lease": 67.4, "mature": true, "lat": 1.2942, "lon": 103.806},
+      {"town": "BUKIT MERAH", "count": 237, "psqm": 6044.8, "price": 547000, "lease": 72.1, "mature": true, "lat": 1.2819, "lon": 103.8239},
+      {"town": "BISHAN", "count": 129, "psqm": 6015.6, "price": 622000, "lease": 73.9, "mature": true, "lat": 1.3508, "lon": 103.8482},
+      {"town": "MARINE PARADE", "count": 27, "psqm": 5977.0, "price": 520000, "lease": 57.4, "mature": true, "lat": 1.302, "lon": 103.9073},
+      {"town": "KALLANG/WHAMPOA", "count": 143, "psqm": 5467.6, "price": 405000, "lease": 68.2, "mature": true, "lat": 1.31, "lon": 103.8651},
+      {"town": "CLEMENTI", "count": 144, "psqm": 5100.1, "price": 417500, "lease": 65.9, "mature": true, "lat": 1.3162, "lon": 103.7649},
+      {"town": "TOA PAYOH", "count": 143, "psqm": 5000.0, "price": 388000, "lease": 66.5, "mature": true, "lat": 1.3343, "lon": 103.8563},
+      {"town": "GEYLANG", "count": 144, "psqm": 4835.9, "price": 355000, "lease": 64.7, "mature": true, "lat": 1.3201, "lon": 103.8918},
+      {"town": "SERANGOON", "count": 102, "psqm": 4692.1, "price": 449000, "lease": 70.1, "mature": true, "lat": 1.3554, "lon": 103.8679},
+      {"town": "ANG MO KIO", "count": 274, "psqm": 4673.9, "price": 371500, "lease": 65.6, "mature": true, "lat": 1.3691, "lon": 103.8454},
+      {"town": "PUNGGOL", "count": 235, "psqm": 4625.0, "price": 451888, "lease": 91.2, "mature": false, "lat": 1.4052, "lon": 103.9023},
+      {"town": "BEDOK", "count": 351, "psqm": 4552.2, "price": 365000, "lease": 66.1, "mature": true, "lat": 1.3236, "lon": 103.9273},
+      {"town": "TAMPINES", "count": 270, "psqm": 4329.0, "price": 447000, "lease": 73.1, "mature": true, "lat": 1.3533, "lon": 103.9452},
+      {"town": "SENGKANG", "count": 312, "psqm": 4232.7, "price": 425000, "lease": 87.3, "mature": false, "lat": 1.3868, "lon": 103.8914},
+      {"town": "JURONG EAST", "count": 141, "psqm": 4183.7, "price": 370000, "lease": 69.5, "mature": false, "lat": 1.3329, "lon": 103.7436},
+      {"town": "HOUGANG", "count": 334, "psqm": 4099.9, "price": 410000, "lease": 73.2, "mature": false, "lat": 1.3708, "lon": 103.8925},
+      {"town": "BUKIT BATOK", "count": 217, "psqm": 4062.5, "price": 340000, "lease": 71.1, "mature": false, "lat": 1.359, "lon": 103.7496},
+      {"town": "YISHUN", "count": 264, "psqm": 3930.5, "price": 343000, "lease": 72.4, "mature": false, "lat": 1.4304, "lon": 103.8354},
+      {"town": "JURONG WEST", "count": 383, "psqm": 3925.9, "price": 362000, "lease": 75.1, "mature": false, "lat": 1.3404, "lon": 103.709},
+      {"town": "BUKIT PANJANG", "count": 192, "psqm": 3921.8, "price": 405000, "lease": 79.6, "mature": false, "lat": 1.3774, "lon": 103.7719},
+      {"town": "PASIR RIS", "count": 148, "psqm": 3803.9, "price": 465000, "lease": 75.2, "mature": true, "lat": 1.3721, "lon": 103.9474},
+      {"town": "SEMBAWANG", "count": 103, "psqm": 3727.3, "price": 395000, "lease": 84.0, "mature": false, "lat": 1.4491, "lon": 103.8185},
+      {"town": "WOODLANDS", "count": 289, "psqm": 3626.4, "price": 378000, "lease": 77.3, "mature": false, "lat": 1.4382, "lon": 103.789},
+      {"town": "CHOA CHU KANG", "count": 226, "psqm": 3455.3, "price": 375000, "lease": 77.9, "mature": false, "lat": 1.384, "lon": 103.747}
     ];
 
+    // ==========================================
+    // LEAFLET MAP INITIALIZATION & LOGIC
+    // ==========================================
+    let map = null;
+    let mapMarkers = [];
+    let currentMapFilter = 'all';
+
+    function initMap() {
+      // Singapore center coordinates
+      map = L.map('hdb-map', {
+        scrollWheelZoom: false
+      }).setView([1.355, 103.82], 11);
+
+      // Clean Voyager CartoDB tiles
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap contributors',
+        subdomains: 'abcd',
+        maxZoom: 19
+      }).addTo(map);
+
+      // Add custom legend
+      const legend = L.control({ position: 'bottomright' });
+      legend.onAdd = function() {
+        const div = L.DomUtil.create('div', 'map-legend');
+        div.innerHTML = `
+          <strong style="display:block; margin-bottom: 6px;">Pricing Density</strong>
+          <div class="legend-item"><span class="legend-color" style="background: #e41e3f;"></span> > S$ 6,000 / sqm</div>
+          <div class="legend-item"><span class="legend-color" style="background: #f7b125;"></span> S$ 5,000 – 6,000</div>
+          <div class="legend-item"><span class="legend-color" style="background: #1877f2;"></span> S$ 4,000 – 5,000</div>
+          <div class="legend-item"><span class="legend-color" style="background: #31a24c;"></span> < S$ 4,000 / sqm</div>
+        `;
+        return div;
+      };
+      legend.addTo(map);
+
+      updateMapVisuals();
+    }
+
+    function getMarkerColor(val, metric) {
+      if (metric === 'psqm') {
+        if (val >= 6000) return '#e41e3f'; // Red (Prime)
+        if (val >= 5000) return '#f7b125'; // Amber
+        if (val >= 4000) return '#1877f2'; // FB Blue
+        return '#31a24c'; // FB Green
+      } else if (metric === 'price') {
+        if (val >= 600000) return '#e41e3f';
+        if (val >= 450000) return '#f7b125';
+        if (val >= 380000) return '#1877f2';
+        return '#31a24c';
+      } else { // Remaining lease
+        if (val >= 85) return '#31a24c'; // Fresh
+        if (val >= 70) return '#1877f2';
+        if (val >= 65) return '#f7b125';
+        return '#e41e3f'; // Aging
+      }
+    }
+
+    function getMarkerRadius(val, metric) {
+      if (metric === 'psqm') {
+        return Math.max(9, Math.min(26, (val / 320)));
+      } else if (metric === 'price') {
+        return Math.max(9, Math.min(26, (val / 30000)));
+      } else {
+        return Math.max(9, Math.min(24, (val / 4)));
+      }
+    }
+
+    function updateMapVisuals() {
+      if (!map) return;
+      const metric = document.getElementById('map-metric-select').value;
+
+      // Clear previous markers
+      mapMarkers.forEach(m => map.removeLayer(m));
+      mapMarkers = [];
+
+      let dataset = townData;
+      if (currentMapFilter === 'mature') dataset = townData.filter(d => d.mature);
+      if (currentMapFilter === 'nonmature') dataset = townData.filter(d => !d.mature);
+
+      dataset.forEach(item => {
+        const val = item[metric];
+        const color = getMarkerColor(val, metric);
+        const radius = getMarkerRadius(val, metric);
+
+        const circle = L.circleMarker([item.lat, item.lon], {
+          radius: radius,
+          fillColor: color,
+          color: '#ffffff',
+          weight: 2,
+          opacity: 0.95,
+          fillOpacity: 0.78
+        }).addTo(map);
+
+        // Tooltip
+        let metricDisplay = `S$ ${item.psqm.toLocaleString()} / sqm`;
+        if (metric === 'price') metricDisplay = `S$ ${item.price.toLocaleString()}`;
+        if (metric === 'lease') metricDisplay = `${item.lease} yrs lease`;
+
+        circle.bindTooltip(`<strong>${item.town}</strong>: ${metricDisplay}`, {
+          direction: 'top',
+          offset: [0, -radius]
+        });
+
+        // Popup
+        const popupHtml = `
+          <div style="font-family: system-ui; min-width: 190px;">
+            <h4 style="margin: 0 0 6px 0; font-size: 1.05rem; color: #050505;">${item.town}</h4>
+            <span style="display:inline-block; padding: 3px 9px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; background: ${item.mature ? '#e7f3ff' : '#e7f8ed'}; color: ${item.mature ? '#1877f2' : '#248a3d'}; margin-bottom: 8px;">
+              ${item.mature ? 'Mature Town' : 'Non-Mature Town'}
+            </span>
+            <div style="font-size: 0.85rem; line-height: 1.5; color: #65676b;">
+              <div><strong>Median PSQM:</strong> S$ ${item.psqm.toLocaleString()} / sqm</div>
+              <div><strong>Median Resale:</strong> S$ ${item.price.toLocaleString()}</div>
+              <div><strong>Mean Lease:</strong> ${item.lease} years</div>
+              <div><strong>Sample Volume:</strong> ${item.count} units</div>
+            </div>
+          </div>
+        `;
+        circle.bindPopup(popupHtml);
+
+        mapMarkers.push(circle);
+      });
+    }
+
+    function filterMapTowns(type) {
+      currentMapFilter = type;
+      document.querySelectorAll('#map-f-all, #map-f-mature, #map-f-nonmature').forEach(b => b.classList.remove('active'));
+      if (type === 'mature') document.getElementById('map-f-mature').classList.add('active');
+      else if (type === 'nonmature') document.getElementById('map-f-nonmature').classList.add('active');
+      else document.getElementById('map-f-all').classList.add('active');
+
+      updateMapVisuals();
+    }
+
+    // ==========================================
+    // CHART.JS VISUALIZATIONS
+    // ==========================================
     let townChartInstance = null;
 
     function renderTownChart(data) {
@@ -780,7 +1013,7 @@
     }
 
     function filterTowns(type) {
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('#f-all, #f-mature, #f-nonmature').forEach(b => b.classList.remove('active'));
       let subset = townData;
       if (type === 'mature') {
         subset = townData.filter(d => d.mature);
@@ -962,9 +1195,12 @@
       document.getElementById('out-badge').outerHTML = badgeHtml;
     }
 
-    // Initialize
-    renderTownChart(townData);
-    runSimulation();
+    // Initialize all components
+    window.addEventListener('DOMContentLoaded', () => {
+      initMap();
+      renderTownChart(townData);
+      runSimulation();
+    });
   </script>
 </body>
 </html>
